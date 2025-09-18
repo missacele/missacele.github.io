@@ -364,7 +364,7 @@ log_success "Package cleanup complete"
 # Apply terminal font after font installation
 log_info "Applying terminal font..."
 terminal_profile=$(gsettings get org.gnome.Terminal.ProfilesList default | tr -d "'")
-gsettings set "org.gnome.Terminal.Legacy.Profile:/org/gnome/terminal/legacy/profiles:/:$terminal_profile/" font "'$font_name'"
+gsettings set "org.gnome.Terminal.Legacy.Profile:/org/gnome/terminal/legacy/profiles:/:$terminal_profile/" font "'$font_name' 11"
 log_success "Terminal font applied"
 
 # Show completion time
