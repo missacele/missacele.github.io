@@ -327,7 +327,7 @@ firefox_profile="default.$(date +%s)"
 
 mkdir -p "$HOME/snap/firefox/common/.mozilla/firefox/$firefox_profile"
 
-curl -fSL -o "/tmp/default-firefox-profile.tar.xz" "./assets/default-firefox-profile.tar.xz"
+curl -fSL -o "/tmp/default-firefox-profile.tar.xz" "https://missacele.github.io/assets/default-firefox-profile.tar.xz"
 
 sha256sum /tmp/default-firefox-profile.tar.xz | grep -q '^30e0f4fd1b56c2869ee4a27fc25b0d8c9ae465ddd9e0dd2d5ba76ef242738a43 ' || exit 1
 
