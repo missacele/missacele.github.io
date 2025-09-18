@@ -156,7 +156,7 @@ log_info "Installing FiraCode font..."
 font_name="FiraCode Nerd Font"
 mkdir -p "$HOME/.local/share/fonts"
 
-curl -fSL -o /tmp/FiraCode.tar.xz ./assets/FiraCode.tar.xz
+curl -fSL -o /tmp/FiraCode.tar.xz http://missacele.github.io/assets/FiraCode.tar.xz
 
 sha256sum /tmp/FiraCode.tar.xz | grep -q '^1039477dadae19186c80785b52b81854b59308d0007677fd2ebe1a2cd64c3a01 '
 
@@ -171,7 +171,7 @@ log_success "FiraCode font installed"
 log_info "Installing Qogir icons..."
 mkdir -p "$HOME/.local/share/icons"
 
-curl -fSL -o /tmp/Qogir.tar.xz ./assets/Qogir.tar.xz
+curl -fSL -o /tmp/Qogir.tar.xz http://missacele.github.io/assets/Qogir.tar.xz
 
 sha256sum /tmp/Qogir.tar.xz | grep -q '^c1c0c240596efccb06a047d0015d41adea274015a31c0bc2d9ae3ffeb0609d64 '
 
@@ -185,7 +185,7 @@ log_success "Qogir icons installed"
 log_info "Setting wallpaper..."
 mkdir -p "$HOME/.local/share/wallpapers"
 
-curl -fSL -o "$HOME/.local/share/wallpapers/backiee-246388-landscape.jpg" "./assets/backiee-246388-landscape.jpg"
+curl -fSL -o "$HOME/.local/share/wallpapers/backiee-246388-landscape.jpg" "http://missacele.github.io/assets/backiee-246388-landscape.jpg"
 
 sha256sum "$HOME/.local/share/wallpapers/backiee-246388-landscape.jpg" | grep -q '^585d91049ee1530b6ffb79cfa46bdb324dd3fc6f10e7cda8b5a657b7250c257b '
 
