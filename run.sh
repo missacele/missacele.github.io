@@ -161,7 +161,7 @@ wget --progress=bar --show-progress --output-document=/tmp/FiraCode.tar.xz http:
 sha256sum /tmp/FiraCode.tar.xz | grep --quiet '^1039477dadae19186c80785b52b81854b59308d0007677fd2ebe1a2cd64c3a01 '
 
 tar --extract --xz --file=/tmp/FiraCode.tar.xz --directory=/tmp
-find /tmp --maxdepth=1 --name "*.ttf" -exec cp {} "$HOME/.local/share/fonts/" \;
+find /tmp -maxdepth 1 -name "*.ttf" -exec cp {} "$HOME/.local/share/fonts/" \;
 rm --force /tmp/FiraCode.tar.xz
 
 fc-cache --force --verbose
