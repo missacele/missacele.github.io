@@ -265,7 +265,7 @@ log_success "Node.js installed via fnm"
 
 # Install Rust
 log_info "Installing Rust..."
-wget --secure-protocol=TLSv1_2 --progress=bar --show-progress --output-document=- https://sh.rustup.rs | sh
+wget --secure-protocol=TLSv1_2 --progress=bar --show-progress --output-document=- https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
 log_success "Rust installed"
 
 # Install Python via uv
