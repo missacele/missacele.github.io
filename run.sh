@@ -194,7 +194,7 @@ gsettings set org.gnome.desktop.background picture-uri-dark "file://$HOME/.local
 log_success "Wallpaper set"
 
 # Install NVIDIA drivers
-if lshw --class display | grep --quiet "NVIDIA"; then
+if lshw -class display | grep --quiet "NVIDIA"; then
     log_info "Installing NVIDIA drivers..."
     sudo add-apt-repository --yes ppa:graphics-drivers/ppa
     sudo apt update
@@ -265,7 +265,7 @@ log_success "Node.js installed via fnm"
 
 # Install Rust
 log_info "Installing Rust..."
-wget --secure-protocol=TLSv1_2 --progress=bar --show-progress -O- https://sh.rustup.rs | sh --stdin -- -y --default-toolchain stable
+wget --secure-protocol=TLSv1_2 --progress=bar --show-progress --output-document=- https://sh.rustup.rs | sh
 log_success "Rust installed"
 
 # Install Python via uv
