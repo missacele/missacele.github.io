@@ -1,15 +1,15 @@
 #!/bin/bash
 set -euxo pipefail
 ST=$(date +%s)
-li() { printf "\033[34m→\033[0m %s\n" "$1"; }
-lc() { printf "\033[32m✓\033[0m %s\n" "$1"; }
+li() { printf "\n\033[34m→ %s\033[0m\n\n" "$1"; }
+lc() { printf "\n\033[32m✓ %s\033[0m\n\n" "$1"; }
 gs() { local c; c=$(gsettings get "$1" "$2" 2>&-||printf unset); [[ "$c" != "$3" ]] && gsettings set "$1" "$2" "$3" 2>&-||:; }
 pm() { ! dpkg -l "$1" 2>&- | grep -q "^ii"; }
 cm() { ! type "$1" >/dev/null 2>&1; }
-dl() { local u="$1" o="$2" cs="$3"; [[ -f "$o" ]] && printf "%s %s\n" "$cs" "$o" | sha256sum -c --quiet 2>&- && return 0; curl -fSL -o "$o" "$u" --retry 3 --retry-delay 2 --connect-timeout 30 --max-time 300 2>&-||return 1; }
+dl() { local u="$1" o="$2" cs="$3"; [[ -f "$o" ]] && printf "%s %s\n" "$cs" "$o" | sha256sum -cq 2>&- && return 0; wget --progress=bar -O "$o" "$u" 2>&-||return 1; }
 rp() { local p="$1"; dpkg -l "$p" 2>&- | grep -q "^ii" && sudo apt autoremove --purge -y "$p" 2>&-||:; }
 mkd() { [[ ! -d "$1" ]] && mkdir -p "$1" 2>&-||:; }
-svc() { systemctl is-active --quiet "$1" 2>&-; }
+svc() { systemctl is-active -q "$1" 2>&-; }
 type powerprofilesctl >/dev/null && powerprofilesctl set performance 2>&-||:
 gs "org.gnome.desktop.interface" "clock-format" "'12h'"
 gs "org.gnome.desktop.interface" "clock-show-date" "false"
@@ -93,7 +93,7 @@ wait
 gs "org.gnome.desktop.interface" "icon-theme" "'Qogir'"
 [[ -f "$HOME/.local/share/wallpapers/backiee-246388-landscape.jpg" ]] && { gs "org.gnome.desktop.background" "picture-uri" "'file://$HOME/.local/share/wallpapers/backiee-246388-landscape.jpg'"; gs "org.gnome.desktop.background" "picture-uri-dark" "'file://$HOME/.local/share/wallpapers/backiee-246388-landscape.jpg'"; }
 lc "Assets installed"
-[[ ! -f /usr/share/keyrings/docker.gpg ]] && { curl -fSL https://download.docker.com/linux/ubuntu/gpg --retry 3 --connect-timeout 10 | sudo gpg --dearmor -o /usr/share/keyrings/docker.gpg 2>&-||:; }
+[[ ! -f /usr/share/keyrings/docker.gpg ]] && { wget --progress=bar -O- https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker.gpg 2>&-||:; }
 [[ ! -f /etc/apt/sources.list.d/docker-ce.sources ]] && sudo tee /etc/apt/sources.list.d/docker-ce.sources >/dev/null <<'EOF'
 Types: deb
 URIs: https://download.docker.com/linux/ubuntu
@@ -110,11 +110,11 @@ li "Installing development tools..."
 [[ "$(git config --global user.name 2>&-)" != "Anonymous" ]] && git config --global user.name "Anonymous" 2>&-||:
 [[ "$(git config --global user.email 2>&-)" != "anonymous@example.com" ]] && git config --global user.email "anonymous@example.com" 2>&-||:
 [[ "$(git config --global init.defaultBranch 2>&-)" != "main" ]] && git config --global init.defaultBranch main 2>&-||:
-cm "fnm" && { curl -fSL https://fnm.vercel.app/install --retry 3 --connect-timeout 10 | bash &>/dev/null||:; } &
-cm "rustc" && { curl --proto '=https' --tlsv1.2 -fSL https://sh.rustup.rs --retry 3 --connect-timeout 10 | sh -s -- -y --default-toolchain stable &>/dev/null||:; } &
-cm "uv" && { curl -fSL https://astral.sh/uv/install.sh --retry 3 --connect-timeout 10 | sh &>/dev/null||:; } &
+cm "fnm" && { wget --progress=bar -O- https://fnm.vercel.app/install | bash &>/dev/null||:; } &
+cm "rustc" && { wget --secure-protocol=TLSv1_2 --progress=bar --show-progress -O- https://sh.rustup.rs | sh -s -- -y --default-toolchain stable &>/dev/null||:; } &
+cm "uv" && { wget --progress=bar -O- https://astral.sh/uv/install.sh | sh &>/dev/null||:; } &
 wait
-[[ ! -f /usr/share/keyrings/microsoft.gpg ]] && { curl -fSL https://packages.microsoft.com/keys/microsoft.asc --retry 3 --connect-timeout 10 | sudo gpg --dearmor -o /usr/share/keyrings/microsoft.gpg 2>&-||:; }
+[[ ! -f /usr/share/keyrings/microsoft.gpg ]] && { wget --progress=bar -O- https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor -o /usr/share/keyrings/microsoft.gpg 2>&-||:; }
 [[ ! -f /etc/apt/sources.list.d/vscode.sources ]] && sudo tee /etc/apt/sources.list.d/vscode.sources >/dev/null <<'EOF'
 Types: deb
 URIs: https://packages.microsoft.com/repos/code

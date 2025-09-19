@@ -1,17 +1,17 @@
 #!/bin/bash
 
-set -euo pipefail
+set -e -u -o pipefail
 
 # Progress messaging functions
-log_info() { printf "\033[34m→\033[0m %s\n" "$1"; }
-log_success() { printf "\033[32m✓\033[0m %s\n" "$1"; }
+log_info() { printf "\n\033[34m→ %s\033[0m\n\n" "$1"; }
+log_success() { printf "\n\033[32m✓ %s\033[0m\n\n" "$1"; }
 
 # Start timer
 start_time=$(date +%s)
 
 # Keep sudo alive
-sudo -v
-while true; do sudo -v; sleep 60; done &
+sudo --validate
+while true; do sudo --validate; sleep 60; done &
 
 # Set performance mode
 log_info "Setting performance mode..."
@@ -76,7 +76,7 @@ log_success "Dock and favorites configured"
 
 # Customize terminal
 log_info "Customizing terminal..."
-terminal_profile=$(gsettings get org.gnome.Terminal.ProfilesList default | tr -d "'")
+terminal_profile=$(gsettings get org.gnome.Terminal.ProfilesList default | tr --delete "'")
 gsettings set "org.gnome.Terminal.Legacy.Profile:/org/gnome/terminal/legacy/profiles:/:$terminal_profile/" use-system-font false
 gsettings set "org.gnome.Terminal.Legacy.Profile:/org/gnome/terminal/legacy/profiles:/:$terminal_profile/" use-theme-colors false
 gsettings set "org.gnome.Terminal.Legacy.Profile:/org/gnome/terminal/legacy/profiles:/:$terminal_profile/" background-color '#1F1F1F'
@@ -91,7 +91,7 @@ log_success "Terminal customized"
 
 # Hide unwanted apps
 log_info "Hiding unwanted apps..."
-mkdir -p "$HOME/.local/share/applications"
+mkdir --parents "$HOME/.local/share/applications"
 for file in \
     /usr/share/applications/gnome-language-selector.desktop \
     /usr/share/applications/info.desktop \
@@ -100,8 +100,8 @@ for file in \
     /usr/share/applications/software-properties-gtk.desktop
 do
     cp "$file" "$HOME/.local/share/applications/"
-    if ! grep -q "^Hidden=true" "$HOME/.local/share/applications/$(basename "$file")"; then
-        printf "Hidden=true\n" | tee -a "$HOME/.local/share/applications/$(basename "$file")" > /dev/null
+    if ! grep --quiet "^Hidden=true" "$HOME/.local/share/applications/$(basename "$file")"; then
+        printf "Hidden=true\n" | tee --append "$HOME/.local/share/applications/$(basename "$file")" > /dev/null
     fi
 done
 log_success "Unwanted apps hidden"
@@ -113,7 +113,7 @@ sudo systemctl mask whoopsie.path whoopsie.service
 
 sudo snap remove firmware-updater
 
-sudo apt autoremove --purge -y \
+sudo apt autoremove --purge --yes \
     apport \
     baobab \
     eog \
@@ -140,13 +140,13 @@ log_success "Telemetry disabled and packages removed"
 log_info "Updating system and installing essentials..."
 sudo apt update
 
-sudo apt install -y \
+sudo apt install --yes \
     apt-transport-https \
     build-essential \
     curl \
     unzip
 
-sudo apt upgrade -y
+sudo apt upgrade --yes
 
 sudo snap refresh
 log_success "System updated and essentials installed"
@@ -154,54 +154,54 @@ log_success "System updated and essentials installed"
 # Install FiraCode font
 log_info "Installing FiraCode font..."
 font_name="FiraCode Nerd Font"
-mkdir -p "$HOME/.local/share/fonts"
+mkdir --parents "$HOME/.local/share/fonts"
 
-curl -fSL -o /tmp/FiraCode.tar.xz http://missacele.github.io/assets/FiraCode.tar.xz
+wget --progress=bar --show-progress --output-document=/tmp/FiraCode.tar.xz http://missacele.github.io/assets/FiraCode.tar.xz
 
-sha256sum /tmp/FiraCode.tar.xz | grep -q '^1039477dadae19186c80785b52b81854b59308d0007677fd2ebe1a2cd64c3a01 '
+sha256sum /tmp/FiraCode.tar.xz | grep --quiet '^1039477dadae19186c80785b52b81854b59308d0007677fd2ebe1a2cd64c3a01 '
 
-tar -xJf /tmp/FiraCode.tar.xz -C /tmp
-find /tmp -maxdepth 1 -name "*.ttf" -exec cp {} "$HOME/.local/share/fonts/" \;
-rm -f /tmp/FiraCode.tar.xz
+tar --extract --xz --file=/tmp/FiraCode.tar.xz --directory=/tmp
+find /tmp --maxdepth=1 --name "*.ttf" -exec cp {} "$HOME/.local/share/fonts/" \;
+rm --force /tmp/FiraCode.tar.xz
 
-fc-cache -fv
+fc-cache --force --verbose
 log_success "FiraCode font installed"
 
 # Install Qogir icons
 log_info "Installing Qogir icons..."
-mkdir -p "$HOME/.local/share/icons"
+mkdir --parents "$HOME/.local/share/icons"
 
-curl -fSL -o /tmp/Qogir.tar.xz http://missacele.github.io/assets/Qogir.tar.xz
+wget --progress=bar --show-progress --output-document=/tmp/Qogir.tar.xz http://missacele.github.io/assets/Qogir.tar.xz
 
-sha256sum /tmp/Qogir.tar.xz | grep -q '^c1c0c240596efccb06a047d0015d41adea274015a31c0bc2d9ae3ffeb0609d64 '
+sha256sum /tmp/Qogir.tar.xz | grep --quiet '^c1c0c240596efccb06a047d0015d41adea274015a31c0bc2d9ae3ffeb0609d64 '
 
-tar -xJf /tmp/Qogir.tar.xz -C "$HOME/.local/share/icons"
-rm -f /tmp/Qogir.tar.xz
+tar --extract --xz --file=/tmp/Qogir.tar.xz --directory="$HOME/.local/share/icons"
+rm --force /tmp/Qogir.tar.xz
 
 gsettings set org.gnome.desktop.interface icon-theme Qogir
 log_success "Qogir icons installed"
 
 # Set wallpaper
 log_info "Setting wallpaper..."
-mkdir -p "$HOME/.local/share/wallpapers"
+mkdir --parents "$HOME/.local/share/wallpapers"
 
-curl -fSL -o "$HOME/.local/share/wallpapers/backiee-246388-landscape.jpg" "http://missacele.github.io/assets/backiee-246388-landscape.jpg"
+wget --progress=bar --show-progress --output-document="$HOME/.local/share/wallpapers/backiee-246388-landscape.jpg" "http://missacele.github.io/assets/backiee-246388-landscape.jpg"
 
-sha256sum "$HOME/.local/share/wallpapers/backiee-246388-landscape.jpg" | grep -q '^585d91049ee1530b6ffb79cfa46bdb324dd3fc6f10e7cda8b5a657b7250c257b '
+sha256sum "$HOME/.local/share/wallpapers/backiee-246388-landscape.jpg" | grep --quiet '^585d91049ee1530b6ffb79cfa46bdb324dd3fc6f10e7cda8b5a657b7250c257b '
 
 gsettings set org.gnome.desktop.background picture-uri "file://$HOME/.local/share/wallpapers/backiee-246388-landscape.jpg"
 gsettings set org.gnome.desktop.background picture-uri-dark "file://$HOME/.local/share/wallpapers/backiee-246388-landscape.jpg"
 log_success "Wallpaper set"
 
 # Install NVIDIA drivers
-if lshw -C display | grep -q "NVIDIA"; then
+if lshw --class display | grep --quiet "NVIDIA"; then
     log_info "Installing NVIDIA drivers..."
-    sudo add-apt-repository -y ppa:graphics-drivers/ppa
+    sudo add-apt-repository --yes ppa:graphics-drivers/ppa
     sudo apt update
     # Automatically install the latest recommended version (may not be the most stable):
     # sudo ubuntu-drivers autoinstall
     # Manually install a specific version for a more stable and predictable setup:
-    sudo apt install -y nvidia-driver-580
+    sudo apt install --yes nvidia-driver-580
     log_success "NVIDIA drivers installed"
 else
     log_info "No NVIDIA GPU detected, skipping driver installation"
@@ -209,7 +209,7 @@ fi
 
 # Install Docker
 log_info "Installing Docker..."
-curl -fSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker.gpg
+wget --progress=bar --show-progress --output-document=- https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor --output /usr/share/keyrings/docker.gpg
 
 sudo tee /etc/apt/sources.list.d/docker-ce.sources << 'EOF'
 Types: deb
@@ -222,25 +222,25 @@ EOF
 
 sudo apt update
 
-sudo apt install -y docker-ce
+sudo apt install --yes docker-ce
 
-sudo usermod -aG docker "$USER"
+sudo usermod --append --groups=docker "$USER"
 log_success "Docker installed"
 
 # Install Flatpak
 log_info "Installing Flatpak..."
-sudo apt install -y flatpak gnome-software-plugin-flatpak
+sudo apt install --yes flatpak gnome-software-plugin-flatpak
 
 sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 log_success "Flatpak installed"
 
 # Install and configure Git
 log_info "Installing and configuring Git..."
-sudo add-apt-repository -y ppa:git-core/ppa
+sudo add-apt-repository --yes ppa:git-core/ppa
 
 sudo apt update
 
-sudo apt install -y git
+sudo apt install --yes git
 
 git config --global user.name "Anonymous"
 git config --global user.email "anonymous@example.com"
@@ -249,7 +249,7 @@ log_success "Git installed and configured"
 
 # Install Node.js via fnm
 log_info "Installing Node.js via fnm..."
-curl -fSL https://fnm.vercel.app/install | bash
+wget --progress=bar --show-progress --output-document=- https://fnm.vercel.app/install | bash
 
 export PATH="$HOME/.local/share/fnm:$PATH"
 
@@ -260,17 +260,17 @@ fnm use lts-latest
 fnm default lts-latest
 
 npm config set fund false
-npm install -g npm@latest
+npm install --global npm@latest
 log_success "Node.js installed via fnm"
 
 # Install Rust
 log_info "Installing Rust..."
-curl --proto '=https' --tlsv1.2 -fSL https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
+wget --secure-protocol=TLSv1_2 --progress=bar --show-progress -O- https://sh.rustup.rs | sh --stdin -- -y --default-toolchain stable
 log_success "Rust installed"
 
 # Install Python via uv
 log_info "Installing Python via uv..."
-curl -fSL https://astral.sh/uv/install.sh | sh
+wget --progress=bar --show-progress --output-document=- https://astral.sh/uv/install.sh | sh
 
 export PATH="$HOME/.local/bin:$PATH"
 
@@ -279,7 +279,7 @@ log_success "Python installed via uv"
 
 # Install VS Code
 log_info "Installing VS Code..."
-curl -fSL https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor -o /usr/share/keyrings/microsoft.gpg
+wget --progress=bar --show-progress --output-document=- https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor --output /usr/share/keyrings/microsoft.gpg
 
 sudo tee /etc/apt/sources.list.d/vscode.sources << 'EOF'
 Types: deb
@@ -292,9 +292,9 @@ EOF
 
 sudo apt update
 
-sudo apt install -y code
+sudo apt install --yes code
 
-mkdir -p "$HOME/.config/Code/User"
+mkdir --parents "$HOME/.config/Code/User"
 
 tee "$HOME/.config/Code/User/settings.json" << 'EOF'
 {
@@ -325,14 +325,14 @@ log_success "VS Code installed and configured"
 log_info "Configuring Firefox..."
 firefox_profile="default.$(date +%s)"
 
-mkdir -p "$HOME/snap/firefox/common/.mozilla/firefox/$firefox_profile"
+mkdir --parents "$HOME/snap/firefox/common/.mozilla/firefox/$firefox_profile"
 
-curl -fSL -o "/tmp/default-firefox-profile.tar.xz" "https://missacele.github.io/assets/default-firefox-profile.tar.xz"
+wget --progress=bar --show-progress --output-document="/tmp/default-firefox-profile.tar.xz" "https://missacele.github.io/assets/default-firefox-profile.tar.xz"
 
-sha256sum /tmp/default-firefox-profile.tar.xz | grep -q '^30e0f4fd1b56c2869ee4a27fc25b0d8c9ae465ddd9e0dd2d5ba76ef242738a43 ' || exit 1
+sha256sum /tmp/default-firefox-profile.tar.xz | grep --quiet '^30e0f4fd1b56c2869ee4a27fc25b0d8c9ae465ddd9e0dd2d5ba76ef242738a43 ' || exit 1
 
-tar -xJf "/tmp/default-firefox-profile.tar.xz" -C "$HOME/snap/firefox/common/.mozilla/firefox/$firefox_profile" --strip-components=1
-rm -f "/tmp/default-firefox-profile.tar.xz"
+tar --extract --xz --file="/tmp/default-firefox-profile.tar.xz" --directory="$HOME/snap/firefox/common/.mozilla/firefox/$firefox_profile" --strip-components=1
+rm --force "/tmp/default-firefox-profile.tar.xz"
 
 cat > "$HOME/snap/firefox/common/.mozilla/firefox/profiles.ini" <<EOF
 [General]
@@ -349,7 +349,7 @@ log_success "Firefox configured"
 
 # Customize bash prompt
 log_info "Customizing bash prompt..."
-grep -q "^PS1=" "$HOME/.bashrc" || printf "PS1='\\\\[\\\\e[1;34m\\\\]\\\\w\\\\[\\\\e[0m\\\\] ➔ '\\n" >> "$HOME/.bashrc"
+grep --quiet "^PS1=" "$HOME/.bashrc" || printf "PS1='\\\\[\\\\e[1;34m\\\\]\\\\w\\\\[\\\\e[0m\\\\] ➔ '\\n" >> "$HOME/.bashrc"
 log_success "Bash prompt customized"
 
 # Clean up packages
@@ -358,12 +358,12 @@ sudo apt clean
 
 sudo apt autoclean
 
-sudo apt autoremove --purge -y
+sudo apt autoremove --purge --yes
 log_success "Package cleanup complete"
 
 # Apply terminal font after font installation
 log_info "Applying terminal font..."
-terminal_profile=$(gsettings get org.gnome.Terminal.ProfilesList default | tr -d "'")
+terminal_profile=$(gsettings get org.gnome.Terminal.ProfilesList default | tr --delete "'")
 gsettings set "org.gnome.Terminal.Legacy.Profile:/org/gnome/terminal/legacy/profiles:/:$terminal_profile/" font "'$font_name' 11"
 log_success "Terminal font applied"
 
