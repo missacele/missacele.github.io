@@ -161,7 +161,7 @@ wget --progress=bar --show-progress --output-document=/tmp/FiraCode.tar.xz http:
 sha256sum /tmp/FiraCode.tar.xz | grep --quiet '^1039477dadae19186c80785b52b81854b59308d0007677fd2ebe1a2cd64c3a01 '
 
 tar --extract --xz --file=/tmp/FiraCode.tar.xz --directory=/tmp
-find /tmp --maxdepth=1 --name "*.ttf" -exec cp {} "$HOME/.local/share/fonts/" \;
+find /tmp -maxdepth 1 -name "*.ttf" -exec cp {} "$HOME/.local/share/fonts/" \;
 rm --force /tmp/FiraCode.tar.xz
 
 fc-cache --force --verbose
@@ -194,7 +194,7 @@ gsettings set org.gnome.desktop.background picture-uri-dark "file://$HOME/.local
 log_success "Wallpaper set"
 
 # Install NVIDIA drivers
-if lshw --class display | grep --quiet "NVIDIA"; then
+if lshw -class display | grep --quiet "NVIDIA"; then
     log_info "Installing NVIDIA drivers..."
     sudo add-apt-repository --yes ppa:graphics-drivers/ppa
     sudo apt update
@@ -265,7 +265,7 @@ log_success "Node.js installed via fnm"
 
 # Install Rust
 log_info "Installing Rust..."
-wget --secure-protocol=TLSv1_2 --progress=bar --show-progress -O- https://sh.rustup.rs | sh --stdin -- -y --default-toolchain stable
+wget --secure-protocol=TLSv1_2 --progress=bar --show-progress --output-document=- https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
 log_success "Rust installed"
 
 # Install Python via uv

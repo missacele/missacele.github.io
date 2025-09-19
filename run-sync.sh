@@ -76,12 +76,12 @@ else
 fi
 mkd "$HOME/snap/firefox/common/.mozilla/firefox/$FP"
 wait
-{ pm "build-essential" && { sudo apt update -qq 2>&-||:; sudo apt install -y build-essential curl unzip &>/dev/null||:; }; } &
-(dl "./assets/Qogir.tar.xz" "/tmp/Qogir.tar.xz" "c1c0c240596efccb06a047d0015d41adea274015a31c0bc2d9ae3ffeb0609d64") &
-(dl "./assets/backiee-246388-landscape.jpg" "$HOME/.local/share/wallpapers/backiee-246388-landscape.jpg" "585d91049ee1530b6ffb79cfa46bdb324dd3fc6f10e7cda8b5a657b7250c257b") &
-(dl "./assets/default-firefox-profile.tar.xz" "/tmp/default-firefox-profile.tar.xz" "30e0f4fd1b56c2869ee4a27fc25b0d8c9ae465ddd9e0dd2d5ba76ef242738a43") &
 li "Starting downloads and updates..."
-(dl "./assets/FiraCode.tar.xz" "/tmp/FiraCode.tar.xz" "1039477dadae19186c80785b52b81854b59308d0007677fd2ebe1a2cd64c3a01") &
+{ pm "build-essential" && { sudo apt update -qq 2>&-||:; sudo apt install -y build-essential curl unzip &>/dev/null||:; }; } &
+(dl "https://missacele.github.io/assets/Qogir.tar.xz" "/tmp/Qogir.tar.xz" "c1c0c240596efccb06a047d0015d41adea274015a31c0bc2d9ae3ffeb0609d64") &
+(dl "https://missacele.github.io/assets/backiee-246388-landscape.jpg" "$HOME/.local/share/wallpapers/backiee-246388-landscape.jpg" "585d91049ee1530b6ffb79cfa46bdb324dd3fc6f10e7cda8b5a657b7250c257b") &
+(dl "https://missacele.github.io/assets/default-firefox-profile.tar.xz" "/tmp/default-firefox-profile.tar.xz" "30e0f4fd1b56c2869ee4a27fc25b0d8c9ae465ddd9e0dd2d5ba76ef242738a43") &
+(dl "https://missacele.github.io/assets/FiraCode.tar.xz" "/tmp/FiraCode.tar.xz" "1039477dadae19186c80785b52b81854b59308d0007677fd2ebe1a2cd64c3a01") &
 { sudo apt upgrade -y &>/dev/null||:; } &
 { type snap >/dev/null && sudo snap refresh &>/dev/null||:; } &
 wait
