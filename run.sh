@@ -156,7 +156,7 @@ log_info "Installing FiraCode font..."
 font_name="FiraCode Nerd Font"
 mkdir --parents "$HOME/.local/share/fonts"
 
-wget --progress=bar --show-progress --output-document=/tmp/FiraCode.tar.xz http://missacele.github.io/assets/FiraCode.tar.xz
+wget -4 --progress=bar --show-progress --output-document=/tmp/FiraCode.tar.xz https://missacele.github.io/assets/FiraCode.tar.xz
 
 sha256sum /tmp/FiraCode.tar.xz | grep --quiet '^1039477dadae19186c80785b52b81854b59308d0007677fd2ebe1a2cd64c3a01 '
 
@@ -171,7 +171,7 @@ log_success "FiraCode font installed"
 log_info "Installing Qogir icons..."
 mkdir --parents "$HOME/.local/share/icons"
 
-wget --progress=bar --show-progress --output-document=/tmp/Qogir.tar.xz http://missacele.github.io/assets/Qogir.tar.xz
+wget -4 --progress=bar --show-progress --output-document=/tmp/Qogir.tar.xz https://missacele.github.io/assets/Qogir.tar.xz
 
 sha256sum /tmp/Qogir.tar.xz | grep --quiet '^c1c0c240596efccb06a047d0015d41adea274015a31c0bc2d9ae3ffeb0609d64 '
 
@@ -185,7 +185,7 @@ log_success "Qogir icons installed"
 log_info "Setting wallpaper..."
 mkdir --parents "$HOME/.local/share/wallpapers"
 
-wget --progress=bar --show-progress --output-document="$HOME/.local/share/wallpapers/backiee-246388-landscape.jpg" "http://missacele.github.io/assets/backiee-246388-landscape.jpg"
+wget -4 --progress=bar --show-progress --output-document="$HOME/.local/share/wallpapers/backiee-246388-landscape.jpg" "https://missacele.github.io/assets/backiee-246388-landscape.jpg"
 
 sha256sum "$HOME/.local/share/wallpapers/backiee-246388-landscape.jpg" | grep --quiet '^585d91049ee1530b6ffb79cfa46bdb324dd3fc6f10e7cda8b5a657b7250c257b '
 
@@ -196,12 +196,17 @@ log_success "Wallpaper set"
 # Install NVIDIA drivers
 if lshw -class display | grep --quiet "NVIDIA"; then
     log_info "Installing NVIDIA drivers..."
-    sudo add-apt-repository --yes ppa:graphics-drivers/ppa
-    sudo apt update
+
+    # Disabling ppa due to slow download speed:
+    # sudo add-apt-repository --yes ppa:graphics-drivers/ppa
+    # sudo apt update
+
     # Automatically install the latest recommended version (may not be the most stable):
     # sudo ubuntu-drivers autoinstall
+
     # Manually install a specific version for a more stable and predictable setup:
     sudo apt install --yes nvidia-driver-580
+
     log_success "NVIDIA drivers installed"
 else
     log_info "No NVIDIA GPU detected, skipping driver installation"
@@ -209,7 +214,7 @@ fi
 
 # Install Docker
 log_info "Installing Docker..."
-wget --progress=bar --show-progress --output-document=- https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor --output /usr/share/keyrings/docker.gpg
+wget -4 --progress=bar --show-progress --output-document=- https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor --output /usr/share/keyrings/docker.gpg
 
 sudo tee /etc/apt/sources.list.d/docker-ce.sources << 'EOF'
 Types: deb
@@ -249,7 +254,7 @@ log_success "Git installed and configured"
 
 # Install Node.js via fnm
 log_info "Installing Node.js via fnm..."
-wget --progress=bar --show-progress --output-document=- https://fnm.vercel.app/install | bash
+wget -4 --progress=bar --show-progress --output-document=- https://fnm.vercel.app/install | bash
 
 export PATH="$HOME/.local/share/fnm:$PATH"
 
@@ -265,12 +270,12 @@ log_success "Node.js installed via fnm"
 
 # Install Rust
 log_info "Installing Rust..."
-wget --secure-protocol=TLSv1_2 --progress=bar --show-progress --output-document=- https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
+wget -4 --secure-protocol=TLSv1_2 --progress=bar --show-progress --output-document=- https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
 log_success "Rust installed"
 
 # Install Python via uv
 log_info "Installing Python via uv..."
-wget --progress=bar --show-progress --output-document=- https://astral.sh/uv/install.sh | sh
+wget -4 --progress=bar --show-progress --output-document=- https://astral.sh/uv/install.sh | sh
 
 export PATH="$HOME/.local/bin:$PATH"
 
@@ -279,7 +284,7 @@ log_success "Python installed via uv"
 
 # Install VS Code
 log_info "Installing VS Code..."
-wget --progress=bar --show-progress --output-document=- https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor --output /usr/share/keyrings/microsoft.gpg
+wget -4 --progress=bar --show-progress --output-document=- https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor --output /usr/share/keyrings/microsoft.gpg
 
 sudo tee /etc/apt/sources.list.d/vscode.sources << 'EOF'
 Types: deb
@@ -296,15 +301,16 @@ sudo apt install --yes code
 
 mkdir --parents "$HOME/.config/Code/User"
 
-tee "$HOME/.config/Code/User/settings.json" << 'EOF'
+tee "$HOME/.config/Code/User/settings.json" << EOF
 {
   "[python]": {
     "editor.insertSpaces": true,
     "editor.tabSize": 4
   },
   "chat.commandCenter.enabled": false,
+  "chat.disableAIFeatures": true,
   "editor.acceptSuggestionOnEnter": "off",
-  "editor.fontFamily": "'$font_name', monospace",
+  "editor.fontFamily": "\"$font_name\", monospace",
   "editor.fontLigatures": true,
   "editor.renderWhitespace": "all",
   "editor.wordWrap": "off",
@@ -313,7 +319,7 @@ tee "$HOME/.config/Code/User/settings.json" << 'EOF'
   "files.insertFinalNewline": true,
   "files.trimTrailingWhitespace": true,
   "telemetry.telemetryLevel": "off",
-  "terminal.integrated.fontFamily": "'$font_name', monospace",
+  "terminal.integrated.fontFamily": "\"$font_name\", monospace",
   "window.newWindowDimensions": "maximized",
   "workbench.editor.empty.hint": "hidden",
   "workbench.startupEditor": "none"
@@ -327,7 +333,7 @@ firefox_profile="default.$(date +%s)"
 
 mkdir --parents "$HOME/snap/firefox/common/.mozilla/firefox/$firefox_profile"
 
-wget --progress=bar --show-progress --output-document="/tmp/default-firefox-profile.tar.xz" "https://missacele.github.io/assets/default-firefox-profile.tar.xz"
+wget -4 --progress=bar --show-progress --output-document="/tmp/default-firefox-profile.tar.xz" "https://missacele.github.io/assets/default-firefox-profile.tar.xz"
 
 sha256sum /tmp/default-firefox-profile.tar.xz | grep --quiet '^30e0f4fd1b56c2869ee4a27fc25b0d8c9ae465ddd9e0dd2d5ba76ef242738a43 ' || exit 1
 
