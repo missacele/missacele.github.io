@@ -1,5 +1,54 @@
 set -euo pipefail
 
+log_info() { printf "\e[1;34m[INFO]\e[0m %s\n" "$1" >&2; }
+log_warn() { printf "\e[1;33m[WARN]\e[0m %s\n" "$1" >&2; }
+log_error() { printf "\e[1;31m[ERROR]\e[0m %s\n" "$1" >&2; }
+
+safe_download() {
+  local -r url="$1"
+  local -r filename="$2"
+  local -r temp_dir="${3:-/tmp}"
+
+  [ -f "$temp_dir/$filename" ] && rm -f "$temp_dir/$filename"
+
+  if ! aria2c -x8 -s8 -d "$temp_dir" -o "$filename" "$url"; then
+    log_error "Download failed: $url"
+    exit 1
+  fi
+
+  if [ ! -f "$temp_dir/$filename" ]; then
+    log_error "Downloaded file not found: $temp_dir/$filename"
+    exit 1
+  fi
+}
+
+check_and_install_packages() {
+  local -r packages=("$@")
+  local missing_packages=()
+
+  for pkg in "${packages[@]}"; do
+    if ! dpkg -s "$pkg" >/dev/null 2>&1; then
+      missing_packages+=("$pkg")
+    fi
+  done
+
+  if [ ${#missing_packages[@]} -gt 0 ]; then
+    log_info "Installing packages: ${missing_packages[*]}"
+    sudo DEBIAN_FRONTEND=noninteractive apt-get install -y "${missing_packages[@]}"
+  fi
+}
+
+check_and_remove_packages() {
+  local -r packages=("$@")
+
+  for pkg in "${packages[@]}"; do
+    if dpkg -s "$pkg" >/dev/null 2>&1; then
+      log_info "Removing package: $pkg"
+      sudo DEBIAN_FRONTEND=noninteractive apt-get purge -y "$pkg"
+    fi
+  done
+}
+
 # ----------
 
 sudo -v
@@ -90,6 +139,7 @@ if [ -d /etc/systemd/user/default.target.wants ]; then
   sudo rmdir --ignore-fail-on-non-empty /etc/systemd/user/default.target.wants || :
 fi
 
+installed_packages=()
 for pkg in \
   apport \
   baobab \
@@ -112,9 +162,13 @@ for pkg in \
   whoopsie \
   yelp
 do
-  dpkg -s "$pkg" >/dev/null 2>&1 && \
-    sudo DEBIAN_FRONTEND=noninteractive apt-get purge -y "$pkg"
+  dpkg -s "$pkg" >/dev/null 2>&1 && installed_packages+=("$pkg")
 done
+
+if [ ${#installed_packages[@]} -gt 0 ]; then
+  log_info "Removing packages: ${installed_packages[*]}"
+  sudo DEBIAN_FRONTEND=noninteractive apt-get purge -y "${installed_packages[@]}"
+fi
 
 sudo systemctl daemon-reload
 
@@ -122,62 +176,46 @@ sudo systemctl daemon-reload
 
 sudo apt-get update
 
-missing_packages=()
-for pkg in \
-  apt-transport-https \
-  aria2 \
-  build-essential \
-  curl \
-  libssl-dev \
-  tree
-do
-  if ! dpkg -s "$pkg" >/dev/null 2>&1; then
-    missing_packages+=("$pkg")
-  fi
-done
-
-if [ ${#missing_packages[@]} -gt 0 ]; then
-  sudo DEBIAN_FRONTEND=noninteractive apt-get install -y "${missing_packages[@]}"
-fi
+check_and_install_packages apt-transport-https aria2 build-essential curl libssl-dev tree
 
 if apt-get -s upgrade | grep -q '^Inst '; then
+  log_info "Upgrading system packages"
   sudo DEBIAN_FRONTEND=noninteractive apt-get upgrade -y
 fi
 
 if snap refresh --list 2>/dev/null | grep -q 'available'; then
+  log_info "Refreshing snap packages"
   sudo snap refresh
 fi
 
 # ----------
 
-if sudo find /var/cache/apt/archives -maxdepth 1 -type f -name '*.deb' -print -quit 2>/dev/null | grep -q .; then
-  sudo apt-get clean
-fi
+wallpaper_file="$HOME/.local/share/wallpapers/backiee-246388-landscape.jpg"
+wallpaper_uri="file://$wallpaper_file"
 
-if sudo apt-get -s autoclean 2>/dev/null | grep -q '^Del '; then
-  sudo apt-get autoclean
-fi
-
-if sudo apt-get -s autoremove --purge 2>/dev/null | grep -q '^Remv '; then
-  sudo DEBIAN_FRONTEND=noninteractive apt-get autoremove --purge -y
-fi
-
-if [ -f /var/run/reboot-required ]; then
-  echo -e "\e[1;31mReboot required for all changes to take effect.\e[0m"
+if [ -f "$wallpaper_file" ]; then
+  log_info "Wallpaper already exists"
 else
-  echo -e "\e[1;32mNo reboot required. System is fully up to date.\e[0m"
+  log_info "Downloading wallpaper"
+  mkdir -p "$HOME/.local/share/wallpapers"
+  safe_download "https://missacele.github.io/assets/backiee-246388-landscape.jpg" "backiee-246388-landscape.jpg"
+  mv /tmp/backiee-246388-landscape.jpg "$wallpaper_file"
 fi
+
+gsettings set org.gnome.desktop.background picture-uri "$wallpaper_uri"
+gsettings set org.gnome.desktop.background picture-uri-dark "$wallpaper_uri"
 
 # ----------
 
 if fc-list ":family=FiraCode Nerd Font" | grep -q .; then
-  :
+  log_info "FiraCode Nerd Font already installed"
 else
+  log_info "Installing FiraCode Nerd Font"
   temp_dir="$(mktemp -d)"
   pushd "$temp_dir" >/dev/null
 
   url_latest="https://github.com/ryanoasis/nerd-fonts/releases/latest/download/FiraCode.tar.xz"
-  aria2c -x8 -s8 -o FiraCode.tar.xz "$url_latest"
+  safe_download "$url_latest" "FiraCode.tar.xz" "$temp_dir"
 
   tar -xJf FiraCode.tar.xz
   mkdir -p "$HOME/.local/share/fonts/NerdFonts"
@@ -236,14 +274,16 @@ update_needed=false
 
 if [ ! -f /etc/apt/keyrings/docker.gpg ]; then
   update_needed=true
+  log_info "Installing Docker GPG key"
   sudo install -d -m0755 /etc/apt/keyrings
-  aria2c -x8 -s8 -d /tmp -o docker.gpg.asc https://download.docker.com/linux/ubuntu/gpg
+  safe_download "https://download.docker.com/linux/ubuntu/gpg" "docker.gpg.asc"
   sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg /tmp/docker.gpg.asc
   sudo chmod a+r /etc/apt/keyrings/docker.gpg
   rm -f /tmp/docker.gpg.asc
 fi
 if [ ! -f /etc/apt/sources.list.d/docker.sources ]; then
   update_needed=true
+  log_info "Adding Docker repository"
   sudo tee /etc/apt/sources.list.d/docker.sources >/dev/null <<'EOF'
 Types: deb
 URIs: https://download.docker.com/linux/ubuntu
@@ -255,10 +295,12 @@ EOF
 fi
 
 if [ "$update_needed" = true ]; then
+  log_info "Updating package lists for Docker repository"
   sudo apt-get update
 fi
 
 if ! dpkg -s docker-ce >/dev/null 2>&1; then
+  log_info "Installing Docker CE"
   sudo DEBIAN_FRONTEND=noninteractive apt-get install -y docker-ce
 fi
 sudo groupadd -f docker
@@ -277,7 +319,8 @@ fi
 mkdir -p "$firefox_base/$firefox_profile"
 
 if [ ! -f "$firefox_base/$firefox_profile/prefs.js" ]; then
-  aria2c -x8 -s8 -d /tmp -o firefox-backup.tar.xz "https://missacele.github.io/assets/firefox-backup.tar.xz"
+  log_info "Setting up Firefox profile"
+  safe_download "https://missacele.github.io/assets/firefox-backup.tar.xz" "firefox-backup.tar.xz"
   tar -xJf /tmp/firefox-backup.tar.xz -C "$firefox_base/$firefox_profile" --strip-components=1
   rm -f /tmp/firefox-backup.tar.xz
 fi
@@ -301,18 +344,24 @@ fi
 # ----------
 
 if dpkg -s code >/dev/null 2>&1; then
-  sudo DEBIAN_FRONTEND=noninteractive apt-get remove -y code
+  log_info "VS Code already installed"
+else
+  log_info "Installing VS Code"
+  safe_download "https://code.visualstudio.com/sha/download?build=stable&os=linux-deb-x64" "code.deb"
+  sudo DEBIAN_FRONTEND=noninteractive dpkg -i /tmp/code.deb
+  sudo apt-get install -f -y
+  rm -f /tmp/code.deb
 fi
 
-aria2c -x8 -s8 -d /tmp -o code.deb "https://code.visualstudio.com/sha/download?build=stable&os=linux-deb-x64"
-sudo DEBIAN_FRONTEND=noninteractive dpkg -i /tmp/code.deb
-sudo apt-get install -f -y
-rm -f /tmp/code.deb
-
-code --install-extension PKief.material-icon-theme
-code --install-extension biomejs.biome
-code --install-extension bradlc.vscode-tailwindcss
-code --install-extension Vue.volar
+if ! dpkg -s code >/dev/null 2>&1 || ! code --list-extensions | grep -q "PKief.material-icon-theme"; then
+  log_info "Installing VS Code extensions"
+  code --install-extension PKief.material-icon-theme
+  code --install-extension biomejs.biome
+  code --install-extension bradlc.vscode-tailwindcss
+  code --install-extension Vue.volar
+else
+  log_info "VS Code extensions already installed"
+fi
 
 mkdir -p "$HOME/.config/Code/User"
 cat > "$HOME/.config/Code/User/settings.json" <<EOF
@@ -341,12 +390,69 @@ EOF
 # ----------
 
 if [ ! -d "$HOME/.nvm" ]; then
-  aria2c -x8 -s8 -o install.sh https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh
-  bash install.sh
-  rm -f install.sh
+  log_info "Installing NVM"
+  nvm_latest_version="$(curl -s https://api.github.com/repos/nvm-sh/nvm/releases/latest | grep '"tag_name":' | cut -d'"' -f4)"
+  if [ -z "$nvm_latest_version" ]; then
+    log_error "Failed to fetch latest NVM version from GitHub API"
+    exit 1
+  fi
+  log_info "Using NVM version: $nvm_latest_version"
+  safe_download "https://raw.githubusercontent.com/nvm-sh/nvm/$nvm_latest_version/install.sh" "install.sh"
+  bash /tmp/install.sh
+  rm -f /tmp/install.sh
   \. "$HOME/.nvm/nvm.sh"
   nvm install 24
   npm config set fund false
+else
+  log_info "NVM already installed"
+fi
+
+# ----------
+
+sqlite_dir="$HOME/.local/bin"
+sqlite_tools=(
+  "sqldiff"
+  "sqlite3"
+  "sqlite3_analyzer"
+  "sqlite3_rsync"
+)
+
+needs_install=false
+
+for tool in "${sqlite_tools[@]}"; do
+  if [ ! -f "$sqlite_dir/$tool" ]; then
+    needs_install=true
+    break
+  fi
+done
+
+if [ "$needs_install" = true ]; then
+  log_info "Installing SQLite tools"
+  mkdir -p "$sqlite_dir"
+  safe_download "https://sqlite.org/2025/sqlite-tools-linux-x64-3510000.zip" "sqlite-tools.zip"
+
+  unzip -o /tmp/sqlite-tools.zip -d /tmp
+
+  cp /tmp/sqlite3 /tmp/sqldiff /tmp/sqlite3_analyzer /tmp/sqlite3_rsync "$sqlite_dir/" 2>/dev/null || {
+    log_error "SQLite tools extraction failed - files not found"
+    exit 1
+  }
+
+  rm -f /tmp/sqlite-tools.zip /tmp/sqlite3 /tmp/sqldiff /tmp/sqlite3_analyzer /tmp/sqlite3_rsync
+
+  chmod +x "$sqlite_dir"/*
+else
+  log_info "SQLite tools already installed"
+fi
+
+export PATH="$sqlite_dir:$PATH"
+
+if ! grep -q "export PATH=\"$sqlite_dir" "$HOME/.bashrc" 2>/dev/null; then
+  echo "export PATH=\"$sqlite_dir:\$PATH\"" >> "$HOME/.bashrc"
+fi
+
+if ! grep -q "export PATH=\"$sqlite_dir" "$HOME/.profile" 2>/dev/null; then
+  echo "export PATH=\"$sqlite_dir:\$PATH\"" >> "$HOME/.profile"
 fi
 
 # ----------
