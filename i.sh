@@ -277,9 +277,9 @@ fi
 mkdir -p "$firefox_base/$firefox_profile"
 
 if [ ! -f "$firefox_base/$firefox_profile/prefs.js" ]; then
-  aria2c -x8 -s8 -d /tmp -o default-firefox-profile.tar.xz "https://missacele.github.io/assets/default-firefox-profile.tar.xz"
-  tar -xJf /tmp/default-firefox-profile.tar.xz -C "$firefox_base/$firefox_profile" --strip-components=1
-  rm -f /tmp/default-firefox-profile.tar.xz
+  aria2c -x8 -s8 -d /tmp -o firefox-backup.tar.xz "https://missacele.github.io/assets/firefox-backup.tar.xz"
+  tar -xJf /tmp/firefox-backup.tar.xz -C "$firefox_base/$firefox_profile" --strip-components=1
+  rm -f /tmp/firefox-backup.tar.xz
 fi
 
 desired_ini="$(cat <<EOF
