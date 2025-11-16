@@ -156,7 +156,6 @@ for pkg in \
   gnome-text-editor \
   gnome-user-docs \
   seahorse \
-  ubuntu-desktop-minimal \
   ubuntu-docs \
   ubuntu-report \
   whoopsie \
