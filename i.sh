@@ -179,12 +179,15 @@ check_and_install_packages apt-transport-https aria2 build-essential curl libssl
 
 if apt-get -s upgrade | grep -q '^Inst '; then
   log_info "Upgrading system packages"
-  sudo DEBIAN_FRONTEND=noninteractive apt-get upgrade -y
+  sudo DEBIAN_FRONTEND=noninteractive apt-get full-upgrade -y
 fi
 
-if snap refresh --list 2>/dev/null | grep -q 'available'; then
-  log_info "Refreshing snap packages"
-  sudo snap refresh
+updates=$(snap refresh --list 2>&1)
+if [[ "$updates" == "All snaps up to date." ]]; then
+    log_info "No snap updates available"
+else
+    log_info "Refreshing snap packages"
+    sudo snap refresh
 fi
 
 # ----------
