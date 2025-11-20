@@ -1,4 +1,4 @@
-# i.sh - Ubuntu System Setup & Configuration
+# i.sh - Opinionated Ubuntu 24.04.3 (amd64) System Setup & Configuration
 
 An idempotent setup script that configures a fresh Ubuntu installation with developer tools, privacy settings, and customizations.
 
