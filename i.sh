@@ -355,10 +355,11 @@ else
   rm -f /tmp/code.deb
 fi
 
-if ! dpkg -s code >/dev/null 2>&1 || ! code --list-extensions | grep -q "PKief.material-icon-theme"; then
+if ! dpkg -s code >/dev/null 2>&1 || ! code --list-extensions | grep -q "biomejs.biome"; then
   log_info "Installing VS Code extensions"
-  code --install-extension PKief.material-icon-theme
   code --install-extension biomejs.biome
+  code --install-extension PKief.material-icon-theme
+  code --install-extension qwtel.sqlite-viewer
   code --install-extension bradlc.vscode-tailwindcss
   code --install-extension Vue.volar
 else
@@ -368,12 +369,15 @@ fi
 mkdir -p "$HOME/.config/Code/User"
 cat > "$HOME/.config/Code/User/settings.json" <<EOF
 {
+  "breadcrumbs.enabled": false,
   "chat.commandCenter.enabled": false,
   "chat.disableAIFeatures": true,
   "editor.acceptSuggestionOnEnter": "off",
   "editor.fontFamily": "'FiraCode Nerd Font', monospace",
   "editor.fontLigatures": true,
+  "editor.minimap.enabled": false,
   "editor.renderWhitespace": "all",
+  "editor.stickyScroll.enabled": false,
   "editor.wordWrap": "off",
   "extensions.ignoreRecommendations": true,
   "files.autoSave": "afterDelay",
@@ -383,6 +387,7 @@ cat > "$HOME/.config/Code/User/settings.json" <<EOF
   "terminal.integrated.fontFamily": "'FiraCode Nerd Font', monospace",
   "window.commandCenter": false,
   "window.newWindowDimensions": "maximized",
+  "workbench.activityBar.location": "top",
   "workbench.editor.empty.hint": "hidden",
   "workbench.iconTheme": "material-icon-theme",
   "workbench.startupEditor": "none"
@@ -405,6 +410,7 @@ if [ ! -d "$HOME/.nvm" ]; then
   \. "$HOME/.nvm/nvm.sh"
   nvm install 24
   npm config set fund false
+  npm install -g @biomejs/biome
 else
   log_info "NVM already installed"
 fi
